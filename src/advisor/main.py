@@ -136,16 +136,14 @@ def main():
                 report.write_json(f, args.issue_types)
             else:
                 report.write(f)
-    else:
-        if args.json:
+    elif args.json:
             report.write_json(sys.stdout, args.issue_types)
-        elif not args.avx:
+    else:
+        if args.avx:
+            report.write_csv(args.avx)
+        else:
             report.write(sys.stdout)
             print('\nUse --output FILENAME.html to generate an HTML report or --avx FILENAME.csv to generate csv file.')
-
-    "for genearting csv file for AVX instructions"
-    if args.avx:
-        write_csv(args.avx)
 
 if __name__ == '__main__':
     main()

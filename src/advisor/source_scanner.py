@@ -34,7 +34,7 @@ from .ported_inline_asm_remark import PortedInlineAsmRemark
 from .pragma_simd_issue import PragmaSimdIssue
 from .preprocessor_error_issue import PreprocessorErrorIssue
 from .scanner import Scanner
-from .avx_global import *
+from .report import*
 
 class SourceScanner(Scanner):
     """Scanner that scans C, C++ and Fortran source files for potential porting
@@ -81,16 +81,13 @@ class SourceScanner(Scanner):
     def initialize_report(self, report):
         report.ported_inline_asm = 0
 
-    def has_write_csv_file(self):
-        return hasattr(self, 'has_write_csv_file')
-
     """Function to generate csv file for AVX instructions"""
-    def write_csv_file(self, filename, avx256_count_no, avx512_count_no, total_avx_no):
+    def prepare_csv_file(self, filename, avx256_count_no, avx512_count_no, total_avx_no, report):
         if total_avx_no > 0 :
-            avx256_data.append(avx256_count_no)
-            avx512_data.append(avx512_count_no)
-            total_data.append(total_avx_no)
-            filename_data.append(filename)
+            report.avx256_data.append(avx256_count_no)
+            report.avx512_data.append(avx512_count_no)
+            report.total_data.append(total_avx_no)
+            report.filename_data.append(filename)
 
     def scan_file_object(self, filename, file_object, report):
         continuation_parser = ContinuationParser()
@@ -179,8 +176,6 @@ class SourceScanner(Scanner):
                 if other_match and not arm_match:
                     intrinsic = other_match.group(1)
                     if not naive_cpp.in_other_arch_specific_code():
-                        report.add_issue(IntrinsicIssue(
-                            filename, lineno, intrinsic, function=function))
                         if avx256_match:
                             avx256_count += 1
                             report.add_issue(AVX256IntrinsicIssue(
@@ -211,7 +206,7 @@ class SourceScanner(Scanner):
             report.add_issue(issue)
 
         total_avx_count = avx256_count + avx512_count
-        self.write_csv_file(filename, avx256_count, avx512_count, total_avx_count)
+        self.prepare_csv_file(filename, avx256_count, avx512_count, total_avx_count, report)
 
     def finalize_report(self, report):
         for function in self.other_arch_intrinsic_inline_asm_functions:
